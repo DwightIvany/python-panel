@@ -40,17 +40,14 @@ export class PythonPanelSettingTab extends PluginSettingTab {
 						void this.addScript();
 					},
 				},
-				onReorder: async (oldIndex: number, newIndex: number) => {
+				onReorder: (oldIndex: number, newIndex: number) => {
 					const [moved] = scripts.splice(oldIndex, 1);
 					scripts.splice(newIndex, 0, moved);
-					await this.plugin.saveSettings();
-					this.plugin.refreshView();
+					void this.persistAndRefresh();
 				},
-				onDelete: async (index: number) => {
+				onDelete: (index: number) => {
 					scripts.splice(index, 1);
-					await this.plugin.saveSettings();
-					this.plugin.refreshView();
-					this.update();
+					void this.persistAndRefresh().then(() => this.update());
 				},
 				items: scripts.map((entry, index) => ({
 					name: isSeparator(entry) ? "Separator" : "Script",
@@ -65,6 +62,11 @@ export class PythonPanelSettingTab extends PluginSettingTab {
 				})),
 			},
 		];
+	}
+
+	private async persistAndRefresh(): Promise<void> {
+		await this.plugin.saveSettings();
+		this.plugin.refreshView();
 	}
 
 	private async addScript(): Promise<void> {

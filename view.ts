@@ -1,35 +1,7 @@
 import { ItemView, MarkdownView, Notice, WorkspaceLeaf } from "obsidian";
 import PythonPanelPlugin from "./main";
 import { isSeparator, parseSeparator } from "./separator";
-import { exec as nodeExec } from "child_process";
-import type { ExecOptions as NodeExecOptions } from "child_process";
-import { mkdir, readFile, writeFile } from "fs/promises";
-import { join } from "path";
-import * as process from "process";
-
-interface ExecResult {
-	stdout: string;
-	stderr: string;
-}
-
-type ExecOptions = Omit<NodeExecOptions, "encoding"> & {
-	encoding?: BufferEncoding;
-};
-
-/** Typed wrapper around child_process.exec (promisify's overloads resolve to any). */
-function exec(command: string, options?: ExecOptions): Promise<ExecResult> {
-	return new Promise((resolve, reject) => {
-		nodeExec(command, options ?? {}, (error, stdout, stderr) => {
-			if (error) {
-				// Preserve the script's partial output for the error path.
-				Object.assign(error, { stdout, stderr });
-				reject(error);
-			} else {
-				resolve({ stdout: String(stdout), stderr: String(stderr) });
-			}
-		});
-	});
-}
+import { exec, joinPath, mkdirp, processEnv, readTextFile, writeTextFile } from "./nodebridge";
 
 /** Scripts that reflow/replace the active editor selection (no Ctrl+C/V). */
 const SELECTION_SCRIPT_NAMES = new Set([
@@ -159,14 +131,14 @@ export class PythonPanelView extends ItemView {
 			throw new Error("Select text in the note, then click the button.");
 		}
 
-		const pluginDir = join(this.app.vault.configDir, "plugins", "python-panel");
-		await mkdir(pluginDir, { recursive: true });
-		const selectionIn = join(pluginDir, "selection-in.txt");
-		const selectionOut = join(pluginDir, "selection-out.txt");
-		await writeFile(selectionIn, selected, "utf8");
+		const pluginDir = joinPath(this.app.vault.configDir, "plugins", "python-panel");
+		await mkdirp(pluginDir);
+		const selectionIn = joinPath(pluginDir, "selection-in.txt");
+		const selectionOut = joinPath(pluginDir, "selection-out.txt");
+		await writeTextFile(selectionIn, selected);
 
 		const env = {
-			...process.env,
+			...processEnv(),
 			PYTHONIOENCODING: "utf-8",
 			OBSIDIAN_SELECTION_IN: selectionIn,
 			OBSIDIAN_SELECTION_OUT: selectionOut,
@@ -177,7 +149,6 @@ export class PythonPanelView extends ItemView {
 			cwd: vaultPath,
 			timeout: scriptTimeoutMs(scriptPath),
 			maxBuffer: 10 * 1024 * 1024,
-			encoding: "utf8",
 			env,
 		});
 
@@ -187,7 +158,7 @@ export class PythonPanelView extends ItemView {
 
 		let result = "";
 		try {
-			result = await readFile(selectionOut, "utf8");
+			result = await readTextFile(selectionOut);
 		} catch {
 			// output file missing — fall back to stdout
 		}
@@ -236,7 +207,7 @@ export class PythonPanelView extends ItemView {
 				);
 			} else {
 				const env = {
-					...process.env,
+					...processEnv(),
 					PYTHONIOENCODING: "utf-8",
 					...(activeFilePath && { OBSIDIAN_ACTIVE_FILE: activeFilePath }),
 				};
@@ -245,7 +216,6 @@ export class PythonPanelView extends ItemView {
 					cwd: vaultPath,
 					timeout: scriptTimeoutMs(scriptPath),
 					maxBuffer: 10 * 1024 * 1024,
-					encoding: "utf8",
 					env,
 				});
 
@@ -324,7 +294,7 @@ export class PythonPanelView extends ItemView {
 		for (const cmd of commands) {
 			try {
 				await exec(`"${cmd}" --version`, {
-					env: { ...process.env, PYTHONIOENCODING: "utf-8" }
+					env: { ...processEnv(), PYTHONIOENCODING: "utf-8" }
 				});
 				return cmd;
 			} catch {

@@ -1,5 +1,5 @@
 import { ItemView, MarkdownView, Notice, WorkspaceLeaf } from "obsidian";
-import CustomWeeklyPlugin from "./main";
+import PythonPanelPlugin from "./main";
 import { isSeparator, parseSeparator } from "./separator";
 import * as child_process from "child_process";
 import * as fs from "fs/promises";
@@ -53,12 +53,12 @@ function doneSummaryLine(stdout: string | undefined): string | null {
 
 export const VIEW_TYPE = "python-panel-view";
 
-export class CustomWeeklyView extends ItemView {
-	plugin: CustomWeeklyPlugin;
+export class PythonPanelView extends ItemView {
+	plugin: PythonPanelPlugin;
 	containerEl: HTMLElement;
 	runningScripts: Set<string> = new Set();
 
-	constructor(leaf: WorkspaceLeaf, plugin: CustomWeeklyPlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: PythonPanelPlugin) {
 		super(leaf);
 		this.plugin = plugin;
 	}

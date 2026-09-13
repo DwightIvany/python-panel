@@ -1,12 +1,12 @@
 import { Plugin } from "obsidian";
-import { CustomWeeklyView, VIEW_TYPE } from "./view";
-import { CustomWeeklySettingTab } from "./settings";
+import { PythonPanelView, VIEW_TYPE } from "./view";
+import { PythonPanelSettingTab } from "./settings";
 
-interface CustomWeeklySettings {
+interface PythonPanelSettings {
 	scripts: string[];
 }
 
-const DEFAULT_SETTINGS: CustomWeeklySettings = {
+const DEFAULT_SETTINGS: PythonPanelSettings = {
 	scripts: [
 		"software/python/obsidian-scripts/copy-focus-to-weekly.py",
 		"software/python/obsidian-scripts/99clean.py",
@@ -16,8 +16,8 @@ const DEFAULT_SETTINGS: CustomWeeklySettings = {
 	]
 };
 
-export default class CustomWeeklyPlugin extends Plugin {
-	settings: CustomWeeklySettings;
+export default class PythonPanelPlugin extends Plugin {
+	settings: PythonPanelSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -25,7 +25,7 @@ export default class CustomWeeklyPlugin extends Plugin {
 		// Register the view
 		this.registerView(
 			VIEW_TYPE,
-			(leaf) => new CustomWeeklyView(leaf, this)
+			(leaf) => new PythonPanelView(leaf, this)
 		);
 
 		// Add ribbon icon to open the view
@@ -52,7 +52,7 @@ export default class CustomWeeklyPlugin extends Plugin {
 		});
 
 		// Add settings tab
-		this.addSettingTab(new CustomWeeklySettingTab(this.app, this));
+		this.addSettingTab(new PythonPanelSettingTab(this.app, this));
 
 		// Open sidebar when workspace is ready (avoid getRightLeaf null on startup)
 		this.app.workspace.onLayoutReady(() => {
@@ -76,7 +76,7 @@ export default class CustomWeeklyPlugin extends Plugin {
 	/** Refresh the panel view if it's open (e.g. after a settings change). */
 	refreshView() {
 		const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
-		if (leaf && leaf.view instanceof CustomWeeklyView) {
+		if (leaf && leaf.view instanceof PythonPanelView) {
 			void leaf.view.onOpen();
 		}
 	}
@@ -101,7 +101,7 @@ export default class CustomWeeklyPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		const data = await this.loadData() as Partial<CustomWeeklySettings> | null;
+		const data = await this.loadData() as Partial<PythonPanelSettings> | null;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
 	}
 

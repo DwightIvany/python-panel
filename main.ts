@@ -103,7 +103,8 @@ export default class PythonPanelPlugin extends Plugin {
 		for (let i = 0; i < MAX_DAYS_BACK; i++) {
 			const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
 			const iso = d.toLocaleDateString("en-CA"); // YYYY-MM-DD (local time)
-			const week = String(isoWeekNumber(d)).padStart(2, "0");
+			const weekNum = isoWeekNumber(d);
+			const week = weekNum < 10 ? `0${weekNum}` : String(weekNum);
 			const file = this.app.vault.getAbstractFileByPath(`daily/${iso}-week-${week}.md`);
 			if (file instanceof TFile) {
 				const leaf = this.app.workspace.getLeaf(false);

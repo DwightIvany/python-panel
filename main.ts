@@ -60,10 +60,6 @@ export default class CustomWeeklyPlugin extends Plugin {
 		});
 	}
 
-	onunload() {
-		this.app.workspace.detachLeavesOfType(VIEW_TYPE);
-	}
-
 	async activateView() {
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE);
 

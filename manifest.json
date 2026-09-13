@@ -1,7 +1,7 @@
 {
 	"id": "python-panel",
 	"name": "Python Panel",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"minAppVersion": "1.2.3",
 	"description": "Run Python scripts from a sidebar.",
 	"author": "Dwight Ivany",

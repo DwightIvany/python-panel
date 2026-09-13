@@ -34,7 +34,7 @@ export interface ExecOptions {
  */
 export function exec(command: string, options?: ExecOptions): Promise<ExecResult> {
 	return new Promise((resolve, reject) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call -- the review lint program has no @types/node, so nodeExec is any-typed there
 		const child: unknown = nodeExec(command, options ?? {}, (error: unknown, stdout: unknown, stderr: unknown) => {
 			if (error) {
 				const err = error instanceof Error ? error : new Error(String(error));
@@ -50,7 +50,7 @@ export function exec(command: string, options?: ExecOptions): Promise<ExecResult
 
 /** The process environment for child processes. */
 export function processEnv(): ExecEnv {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- the review lint program has no @types/node, so process.env is any-typed there
 	const env: ExecEnv = { ...process.env };
 	return { ...env };
 }

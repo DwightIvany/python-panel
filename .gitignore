@@ -6,6 +6,9 @@ tools/
 main.js
 main.js.map
 
+# Plugin data (per-vault user configuration)
+data.json
+
 # TypeScript
 *.tsbuildinfo
 
@@ -13,6 +16,15 @@ main.js.map
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+
+# Editor / IDE
+.idea/
+.vscode/
 
 # OS files
 .DS_Store

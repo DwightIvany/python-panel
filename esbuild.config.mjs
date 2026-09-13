@@ -1,4 +1,4 @@
-﻿import esbuild from "esbuild";
+import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
 
@@ -37,7 +37,7 @@ const context = await esbuild.context({
 	logLevel: "info",
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
-	outfile: '../../../.obsidian/plugins/python-panel/main.js',
+	outfile: 'main.js',
 });
 
 if (prod) {

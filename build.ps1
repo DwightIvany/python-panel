@@ -26,8 +26,10 @@ if (-not (Test-Path $Esbuild)) {
     }
 }
 
-$outDir = (Resolve-Path (Join-Path $Root "..\..\..\.obsidian\plugins\python-panel")).Path
-$outFile = Join-Path $outDir "main.js"
+$outFile = Join-Path $Root "main.js"
+
+# Local install destination inside the vault
+$installDir = Join-Path $Root "..\..\..\.obsidian\plugins\python-panel"
 
 $banner = @"
 /*
@@ -53,6 +55,13 @@ try {
         --outfile="$outFile" `
         @externals
     if ($LASTEXITCODE -ne 0) { throw "esbuild failed with exit $LASTEXITCODE" }
+
+    # Install into the vault plugin folder
+    New-Item -ItemType Directory -Force -Path $installDir | Out-Null
+    Copy-Item -Force $outFile (Join-Path $installDir "main.js")
+    Copy-Item -Force (Join-Path $Root "manifest.json") (Join-Path $installDir "manifest.json")
+    Copy-Item -Force (Join-Path $Root "styles.css") (Join-Path $installDir "styles.css")
+    Write-Host "Installed -> $installDir"
     Write-Host "Done. Reload Obsidian (toggle Python Panel off/on)."
 }
 finally {

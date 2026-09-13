@@ -15,14 +15,14 @@ export class CustomWeeklySettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Python Panel Settings" });
+		new Setting(containerEl).setName("Python Panel Settings").setHeading();
 
 		containerEl.createEl("p", {
 			text: "Configure Python scripts to run from the sidebar. Scripts should be relative to your vault root."
 		});
 
 		// Scripts list
-		containerEl.createEl("h3", { text: "Scripts" });
+		new Setting(containerEl).setName("Scripts").setHeading();
 
 		const scriptsContainer = containerEl.createDiv();
 

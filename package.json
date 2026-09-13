@@ -1,6 +1,6 @@
 {
 	"name": "python-panel",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Run Python scripts from a sidebar",
 	"main": "main.js",
 	"scripts": {

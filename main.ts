@@ -77,7 +77,7 @@ export default class PythonPanelPlugin extends Plugin {
 	refreshView() {
 		const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
 		if (leaf && leaf.view instanceof PythonPanelView) {
-			void leaf.view.onOpen();
+			void leaf.view.refresh();
 		}
 	}
 

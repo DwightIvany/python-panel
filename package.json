@@ -1,6 +1,6 @@
 {
 	"name": "python-panel",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"description": "Run Python scripts from a sidebar",
 	"main": "main.js",
 	"scripts": {
@@ -17,7 +17,7 @@
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
 		"esbuild": "0.27.7",
-		"obsidian": "1.11.0",
+		"obsidian": "1.13.1",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4"
 	}

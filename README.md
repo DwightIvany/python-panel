@@ -15,7 +15,7 @@ An [Obsidian](https://obsidian.md) plugin that adds a sidebar panel of buttons f
 
 ## Requirements
 
-- Obsidian 1.2.3 or later (desktop only — the plugin launches Python as a child process, which the mobile app does not support)
+- Obsidian 1.13.0 or later (desktop only — the plugin launches Python as a child process, which the mobile app does not support)
 - Python 3.x installed and available on `PATH`
 
 ## Installation

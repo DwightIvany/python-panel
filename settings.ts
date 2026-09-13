@@ -1,4 +1,4 @@
-import { PluginSettingTab, Setting, App } from "obsidian";
+import { App, PluginSettingTab, SettingDefinitionItem } from "obsidian";
 import PythonPanelPlugin from "./main";
 import { isSeparator } from "./separator";
 
@@ -10,138 +10,66 @@ export class PythonPanelSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	display(): void {
-		const { containerEl } = this;
+	getControlValue(key: string): unknown {
+		const match = /^scripts\.(\d+)$/.exec(key);
+		if (match) {
+			return this.plugin.settings.scripts[Number(match[1])] ?? "";
+		}
+		return super.getControlValue(key);
+	}
 
-		containerEl.empty();
-
-		containerEl.createEl("p", {
-			text: "Configure Python scripts to run from the sidebar. Scripts should be relative to your vault root."
-		});
-
-		// Scripts list
-		new Setting(containerEl).setName("Scripts").setHeading();
-
-		const scriptsContainer = containerEl.createDiv();
-
-		const moveScript = async (fromIndex: number, toIndex: number) => {
-			if (toIndex < 0 || toIndex >= this.plugin.settings.scripts.length) return;
-			const scripts = this.plugin.settings.scripts;
-			[scripts[fromIndex], scripts[toIndex]] = [scripts[toIndex], scripts[fromIndex]];
+	async setControlValue(key: string, value: unknown): Promise<void> {
+		const match = /^scripts\.(\d+)$/.exec(key);
+		if (match && typeof value === "string") {
+			this.plugin.settings.scripts[Number(match[1])] = value;
 			await this.plugin.saveSettings();
-			this.display();
 			this.plugin.refreshView();
-		};
+		}
+	}
 
-		this.plugin.settings.scripts.forEach((script, index) => {
-			if (isSeparator(script)) {
-				new Setting(scriptsContainer)
-					.setName("Separator")
-					.setClass("python-panel-entry-setting python-panel-separator-setting")
-					.addText((text) => {
-						text
-							.setPlaceholder("--- or --- Group name")
-							.setValue(script)
-							.onChange(async (value) => {
-								this.plugin.settings.scripts[index] = value;
-								await this.plugin.saveSettings();
-								this.plugin.refreshView();
-							});
-					})
-					.addExtraButton((button) => {
-						button
-							.setIcon("arrow-up")
-							.setTooltip("Move separator up")
-							.setDisabled(index === 0)
-							.onClick(async () => {
-								await moveScript(index, index - 1);
-							});
-					})
-					.addExtraButton((button) => {
-						button
-							.setIcon("arrow-down")
-							.setTooltip("Move separator down")
-							.setDisabled(index === this.plugin.settings.scripts.length - 1)
-							.onClick(async () => {
-								await moveScript(index, index + 1);
-							});
-					})
-					.addExtraButton((button) => {
-						button
-							.setIcon("trash")
-							.setTooltip("Remove separator")
-							.onClick(async () => {
-								this.plugin.settings.scripts.splice(index, 1);
-								await this.plugin.saveSettings();
-								this.display(); // Refresh settings
-								this.plugin.refreshView();
-							});
-					});
-			} else {
-				new Setting(scriptsContainer)
-					.setClass("python-panel-entry-setting")
-					.addText((text) => {
-						text
-							.setPlaceholder("path/to/script.py")
-							.setValue(script)
-							.onChange(async (value) => {
-								this.plugin.settings.scripts[index] = value;
-								await this.plugin.saveSettings();
-								this.plugin.refreshView();
-							});
-					})
-					.addExtraButton((button) => {
-						button
-							.setIcon("arrow-up")
-							.setTooltip("Move script up")
-							.setDisabled(index === 0)
-							.onClick(async () => {
-								await moveScript(index, index - 1);
-							});
-					})
-					.addExtraButton((button) => {
-						button
-							.setIcon("arrow-down")
-							.setTooltip("Move script down")
-							.setDisabled(index === this.plugin.settings.scripts.length - 1)
-							.onClick(async () => {
-								await moveScript(index, index + 1);
-							});
-					})
-					.addExtraButton((button) => {
-						button
-							.setIcon("trash")
-							.setTooltip("Remove script")
-							.onClick(async () => {
-								this.plugin.settings.scripts.splice(index, 1);
-								await this.plugin.saveSettings();
-								this.display(); // Refresh settings
-								this.plugin.refreshView();
-							});
-					});
-			}
-		});
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		const scripts = this.plugin.settings.scripts;
+		return [
+			{
+				type: "list" as const,
+				heading: "Scripts",
+				emptyState: "No scripts configured.",
+				addItem: {
+					name: "Add script",
+					action: () => {
+						void this.addScript();
+					},
+				},
+				onReorder: async (oldIndex: number, newIndex: number) => {
+					const [moved] = scripts.splice(oldIndex, 1);
+					scripts.splice(newIndex, 0, moved);
+					await this.plugin.saveSettings();
+					this.plugin.refreshView();
+				},
+				onDelete: async (index: number) => {
+					scripts.splice(index, 1);
+					await this.plugin.saveSettings();
+					this.plugin.refreshView();
+					this.update();
+				},
+				items: scripts.map((entry, index) => ({
+					name: isSeparator(entry) ? "Separator" : "Script",
+					searchable: false,
+					control: {
+						type: "text" as const,
+						key: `scripts.${index}`,
+						placeholder: isSeparator(entry)
+							? "--- or --- Group name"
+							: "path/to/script.py",
+					},
+				})),
+			},
+		];
+	}
 
-		// Add new script button
-		new Setting(containerEl)
-			.addButton((button) => {
-				button
-					.setButtonText("Add Script")
-					.setCta()
-					.onClick(async () => {
-						this.plugin.settings.scripts.push("");
-						await this.plugin.saveSettings();
-						this.display(); // Refresh settings
-					});
-			})
-			.addButton((button) => {
-				button
-					.setButtonText("Add Separator")
-					.onClick(async () => {
-						this.plugin.settings.scripts.push("---");
-						await this.plugin.saveSettings();
-						this.display(); // Refresh settings
-					});
-			});
+	private async addScript(): Promise<void> {
+		this.plugin.settings.scripts.push("");
+		await this.plugin.saveSettings();
+		this.update();
 	}
 }

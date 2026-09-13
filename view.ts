@@ -1,28 +1,35 @@
 import { ItemView, MarkdownView, Notice, WorkspaceLeaf } from "obsidian";
 import PythonPanelPlugin from "./main";
 import { isSeparator, parseSeparator } from "./separator";
-import * as child_process from "child_process";
-import * as fs from "fs/promises";
-import * as path from "path";
-import { promisify } from "util";
+import { exec as nodeExec } from "child_process";
+import type { ExecOptions as NodeExecOptions } from "child_process";
+import { mkdir, readFile, writeFile } from "fs/promises";
+import { join } from "path";
+import * as process from "process";
 
 interface ExecResult {
 	stdout: string;
 	stderr: string;
 }
 
-interface ExecOptions {
-	cwd?: string;
-	timeout?: number;
-	maxBuffer?: number;
-	encoding?: string;
-	env?: NodeJS.ProcessEnv;
-}
+type ExecOptions = Omit<NodeExecOptions, "encoding"> & {
+	encoding?: BufferEncoding;
+};
 
-const exec = promisify(child_process.exec) as (
-	command: string,
-	options?: ExecOptions
-) => Promise<ExecResult>;
+/** Typed wrapper around child_process.exec (promisify's overloads resolve to any). */
+function exec(command: string, options?: ExecOptions): Promise<ExecResult> {
+	return new Promise((resolve, reject) => {
+		nodeExec(command, options ?? {}, (error, stdout, stderr) => {
+			if (error) {
+				// Preserve the script's partial output for the error path.
+				Object.assign(error, { stdout, stderr });
+				reject(error);
+			} else {
+				resolve({ stdout: String(stdout), stderr: String(stderr) });
+			}
+		});
+	});
+}
 
 /** Scripts that reflow/replace the active editor selection (no Ctrl+C/V). */
 const SELECTION_SCRIPT_NAMES = new Set([
@@ -73,6 +80,11 @@ export class PythonPanelView extends ItemView {
 
 	getIcon() {
 		return "calendar-clock";
+	}
+
+	/** Re-render the panel contents (called after settings change). */
+	async refresh(): Promise<void> {
+		await this.onOpen();
 	}
 
 	async onOpen() {
@@ -147,11 +159,11 @@ export class PythonPanelView extends ItemView {
 			throw new Error("Select text in the note, then click the button.");
 		}
 
-		const pluginDir = path.join(this.app.vault.configDir, "plugins", "python-panel");
-		await fs.mkdir(pluginDir, { recursive: true });
-		const selectionIn = path.join(pluginDir, "selection-in.txt");
-		const selectionOut = path.join(pluginDir, "selection-out.txt");
-		await fs.writeFile(selectionIn, selected, "utf8");
+		const pluginDir = join(this.app.vault.configDir, "plugins", "python-panel");
+		await mkdir(pluginDir, { recursive: true });
+		const selectionIn = join(pluginDir, "selection-in.txt");
+		const selectionOut = join(pluginDir, "selection-out.txt");
+		await writeFile(selectionIn, selected, "utf8");
 
 		const env = {
 			...process.env,
@@ -175,7 +187,7 @@ export class PythonPanelView extends ItemView {
 
 		let result = "";
 		try {
-			result = await fs.readFile(selectionOut, "utf8");
+			result = await readFile(selectionOut, "utf8");
 		} catch {
 			// output file missing — fall back to stdout
 		}

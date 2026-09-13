@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Plugin, TFile } from "obsidian";
 import { PythonPanelView, VIEW_TYPE } from "./view";
 import { PythonPanelSettingTab } from "./settings";
 
@@ -15,6 +15,15 @@ const DEFAULT_SETTINGS: PythonPanelSettings = {
 		"software/python/obsidian-scripts/cleanup-latest-weekly.py"
 	]
 };
+
+/** ISO-8601 week number (weeks start Monday; week 1 contains Jan 4th). */
+function isoWeekNumber(date: Date): number {
+	const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+	const dayNum = d.getUTCDay() || 7; // Monday = 1 ... Sunday = 7
+	d.setUTCDate(d.getUTCDate() + 4 - dayNum); // Thursday of this week
+	const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+	return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
 
 export default class PythonPanelPlugin extends Plugin {
 	settings: PythonPanelSettings;
@@ -81,23 +90,27 @@ export default class PythonPanelPlugin extends Plugin {
 		}
 	}
 
-	/** Find and open the most recent weekly note (daily/.../YYYY-MM-DD-week-NN.md). */
+	/**
+	 * Find and open the most recent weekly note (daily/YYYY-MM-DD-week-NN.md).
+	 *
+	 * Walks backwards day by day probing exact paths, so no vault-wide
+	 * enumeration is needed. Assumes filenames follow the ISO week
+	 * convention (the week number matches the ISO week of the embedded date).
+	 */
 	async openLatestWeeklyNote() {
-		// Weekly notes: daily/YYYY-MM-DD-week-NN.md or daily/years+/...
-		const dateInPath = /(\d{4}-\d{2}-\d{2})-week-\d+\.md$/;
-		const files = this.app.vault.getMarkdownFiles()
-			.filter((f) => f.path.startsWith("daily/") && dateInPath.test(f.path))
-			.map((f) => {
-				const m = f.path.match(dateInPath);
-				return { file: f, dateStr: m ? m[1] : "0000-00-00" };
-			})
-			.sort((a, b) => (a.dateStr > b.dateStr ? -1 : 1));
-
-		if (files.length === 0) {
-			return;
+		const MAX_DAYS_BACK = 10 * 366;
+		const today = new Date();
+		for (let i = 0; i < MAX_DAYS_BACK; i++) {
+			const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+			const iso = d.toLocaleDateString("en-CA"); // YYYY-MM-DD (local time)
+			const week = String(isoWeekNumber(d)).padStart(2, "0");
+			const file = this.app.vault.getAbstractFileByPath(`daily/${iso}-week-${week}.md`);
+			if (file instanceof TFile) {
+				const leaf = this.app.workspace.getLeaf(false);
+				await leaf.openFile(file);
+				return;
+			}
 		}
-		const leaf = this.app.workspace.getLeaf(false);
-		await leaf.openFile(files[0].file);
 	}
 
 	async loadSettings() {

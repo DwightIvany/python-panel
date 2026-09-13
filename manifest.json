@@ -3,7 +3,7 @@
 	"name": "Python Panel",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Run Python scripts from a sidebar",
+	"description": "Run Python scripts from a sidebar.",
 	"author": "Dwight Ivany",
 	"authorUrl": "",
 	"fundingUrl": "",

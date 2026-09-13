@@ -10,12 +10,12 @@ An [Obsidian](https://obsidian.md) plugin that adds a sidebar panel of buttons f
 - **Separators and group labels** — organize buttons with horizontal rules or `--- Group Name` headings
 - **Auto Python detection** — finds Python automatically (tries `python3`, `python`, then `py`)
 - **Selection scripts** — scripts named `reflow_prose_selection.py` (or `reflow-prose-selection.py`) receive the current editor selection and replace it with the script output
-- **Commands** — *Open Python Panel (sidebar)* and *Open latest weekly note*
+- **Commands** — *Open sidebar* and *Open latest weekly note*
 - **Settings tab** — add, edit, reorder, and remove scripts and separators
 
 ## Requirements
 
-- Obsidian 0.15.0 or later (desktop only — the plugin launches Python as a child process, which the mobile app does not support)
+- Obsidian 1.2.3 or later (desktop only — the plugin launches Python as a child process, which the mobile app does not support)
 - Python 3.x installed and available on `PATH`
 
 ## Installation

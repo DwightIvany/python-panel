@@ -1,11 +1,11 @@
-import { Plugin, PluginSettingTab, Setting, App } from "obsidian";
-import PythonPanel from "./main";
+import { PluginSettingTab, Setting, App } from "obsidian";
+import CustomWeeklyPlugin from "./main";
 import { isSeparator } from "./separator";
 
 export class CustomWeeklySettingTab extends PluginSettingTab {
-	plugin: PythonPanel;
+	plugin: CustomWeeklyPlugin;
 
-	constructor(app: App, plugin: PythonPanel) {
+	constructor(app: App, plugin: CustomWeeklyPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -14,8 +14,6 @@ export class CustomWeeklySettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
-
-		new Setting(containerEl).setName("Python Panel Settings").setHeading();
 
 		containerEl.createEl("p", {
 			text: "Configure Python scripts to run from the sidebar. Scripts should be relative to your vault root."
@@ -32,9 +30,7 @@ export class CustomWeeklySettingTab extends PluginSettingTab {
 			[scripts[fromIndex], scripts[toIndex]] = [scripts[toIndex], scripts[fromIndex]];
 			await this.plugin.saveSettings();
 			this.display();
-			if (this.plugin.view) {
-				this.plugin.view.onOpen();
-			}
+			this.plugin.refreshView();
 		};
 
 		this.plugin.settings.scripts.forEach((script, index) => {
@@ -49,10 +45,7 @@ export class CustomWeeklySettingTab extends PluginSettingTab {
 							.onChange(async (value) => {
 								this.plugin.settings.scripts[index] = value;
 								await this.plugin.saveSettings();
-								// Refresh the view if it's open
-								if (this.plugin.view) {
-									this.plugin.view.onOpen();
-								}
+								this.plugin.refreshView();
 							});
 					})
 					.addExtraButton((button) => {
@@ -81,10 +74,7 @@ export class CustomWeeklySettingTab extends PluginSettingTab {
 								this.plugin.settings.scripts.splice(index, 1);
 								await this.plugin.saveSettings();
 								this.display(); // Refresh settings
-								// Refresh the view if it's open
-								if (this.plugin.view) {
-									this.plugin.view.onOpen();
-								}
+								this.plugin.refreshView();
 							});
 					});
 			} else {
@@ -97,10 +87,7 @@ export class CustomWeeklySettingTab extends PluginSettingTab {
 							.onChange(async (value) => {
 								this.plugin.settings.scripts[index] = value;
 								await this.plugin.saveSettings();
-								// Refresh the view if it's open
-								if (this.plugin.view) {
-									this.plugin.view.onOpen();
-								}
+								this.plugin.refreshView();
 							});
 					})
 					.addExtraButton((button) => {
@@ -129,10 +116,7 @@ export class CustomWeeklySettingTab extends PluginSettingTab {
 								this.plugin.settings.scripts.splice(index, 1);
 								await this.plugin.saveSettings();
 								this.display(); // Refresh settings
-								// Refresh the view if it's open
-								if (this.plugin.view) {
-									this.plugin.view.onOpen();
-								}
+								this.plugin.refreshView();
 							});
 					});
 			}

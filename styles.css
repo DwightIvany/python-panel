@@ -2,6 +2,10 @@
 	padding: 6px;
 }
 
+.python-panel-container h2 {
+	margin-top: 0;
+}
+
 .python-panel-button {
 	width: 100%;
 	margin-bottom: 2px;
@@ -29,10 +33,15 @@
 }
 
 .python-panel-status {
+	display: none;
 	margin-top: 6px;
 	padding: 4px;
 	font-size: 0.9em;
 	border-radius: 4px;
+}
+
+.python-panel-status.visible {
+	display: block;
 }
 
 .python-panel-status.success {

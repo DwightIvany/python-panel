@@ -16,30 +16,29 @@ const DEFAULT_SETTINGS: CustomWeeklySettings = {
 	]
 };
 
-export default class PythonPanel extends Plugin {
+export default class CustomWeeklyPlugin extends Plugin {
 	settings: CustomWeeklySettings;
-	view: CustomWeeklyView;
 
 	async onload() {
 		await this.loadSettings();
 
 		// Register the view
-		this.registerView(VIEW_TYPE, (leaf) => {
-			this.view = new CustomWeeklyView(leaf, this);
-			return this.view;
-		});
+		this.registerView(
+			VIEW_TYPE,
+			(leaf) => new CustomWeeklyView(leaf, this)
+		);
 
 		// Add ribbon icon to open the view
 		this.addRibbonIcon("calendar-clock", "Python Panel", () => {
-			this.activateView();
+			void this.activateView();
 		});
 
 		// Add command to open the view (sidebar with script buttons)
 		this.addCommand({
-			id: "open-python-panel",
-			name: "Open Python Panel (sidebar)",
+			id: "open-panel",
+			name: "Open sidebar",
 			callback: () => {
-				this.activateView();
+				void this.activateView();
 			}
 		});
 
@@ -48,7 +47,7 @@ export default class PythonPanel extends Plugin {
 			id: "open-latest-weekly-note",
 			name: "Open latest weekly note",
 			callback: () => {
-				this.openLatestWeeklyNote();
+				void this.openLatestWeeklyNote();
 			}
 		});
 
@@ -62,9 +61,7 @@ export default class PythonPanel extends Plugin {
 	}
 
 	onunload() {
-		if (this.view) {
-			this.app.workspace.detachLeavesOfType(VIEW_TYPE);
-		}
+		this.app.workspace.detachLeavesOfType(VIEW_TYPE);
 	}
 
 	async activateView() {
@@ -78,6 +75,14 @@ export default class PythonPanel extends Plugin {
 			type: VIEW_TYPE,
 			active: true,
 		});
+	}
+
+	/** Refresh the panel view if it's open (e.g. after a settings change). */
+	refreshView() {
+		const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+		if (leaf && leaf.view instanceof CustomWeeklyView) {
+			void leaf.view.onOpen();
+		}
 	}
 
 	/** Find and open the most recent weekly note (daily/.../YYYY-MM-DD-week-NN.md). */
@@ -100,7 +105,8 @@ export default class PythonPanel extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const data = await this.loadData() as Partial<CustomWeeklySettings> | null;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
 	}
 
 	async saveSettings() {

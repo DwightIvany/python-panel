@@ -1,12 +1,28 @@
 import { ItemView, MarkdownView, Notice, WorkspaceLeaf } from "obsidian";
-import PythonPanel from "./main";
+import CustomWeeklyPlugin from "./main";
 import { isSeparator, parseSeparator } from "./separator";
 import * as child_process from "child_process";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { promisify } from "util";
 
-const exec = promisify(child_process.exec);
+interface ExecResult {
+	stdout: string;
+	stderr: string;
+}
+
+interface ExecOptions {
+	cwd?: string;
+	timeout?: number;
+	maxBuffer?: number;
+	encoding?: string;
+	env?: NodeJS.ProcessEnv;
+}
+
+const exec = promisify(child_process.exec) as (
+	command: string,
+	options?: ExecOptions
+) => Promise<ExecResult>;
 
 /** Scripts that reflow/replace the active editor selection (no Ctrl+C/V). */
 const SELECTION_SCRIPT_NAMES = new Set([
@@ -38,11 +54,11 @@ function doneSummaryLine(stdout: string | undefined): string | null {
 export const VIEW_TYPE = "python-panel-view";
 
 export class CustomWeeklyView extends ItemView {
-	plugin: PythonPanel;
+	plugin: CustomWeeklyPlugin;
 	containerEl: HTMLElement;
 	runningScripts: Set<string> = new Set();
 
-	constructor(leaf: WorkspaceLeaf, plugin: PythonPanel) {
+	constructor(leaf: WorkspaceLeaf, plugin: CustomWeeklyPlugin) {
 		super(leaf);
 		this.plugin = plugin;
 	}
@@ -65,8 +81,7 @@ export class CustomWeeklyView extends ItemView {
 		container.addClass("python-panel-container");
 
 		// Create header
-		const header = container.createEl("h2", { text: "Python Panel" });
-		header.style.marginTop = "0";
+		container.createEl("h2", { text: "Python Panel" });
 
 		// Create buttons for each script
 		const buttonContainer = container.createDiv();
@@ -78,9 +93,8 @@ export class CustomWeeklyView extends ItemView {
 			}
 		}
 
-		// Create status area
+		// Create status area (hidden until showStatus; see styles.css)
 		this.statusEl = container.createDiv("python-panel-status");
-		this.statusEl.style.display = "none";
 	}
 
 	createScriptButton(container: HTMLElement, scriptPath: string) {
@@ -90,7 +104,7 @@ export class CustomWeeklyView extends ItemView {
 		});
 
 		button.addEventListener("click", () => {
-			this.runScript(scriptPath, button);
+			void this.runScript(scriptPath, button);
 		});
 	}
 
@@ -133,7 +147,7 @@ export class CustomWeeklyView extends ItemView {
 			throw new Error("Select text in the note, then click the button.");
 		}
 
-		const pluginDir = path.join(vaultPath, ".obsidian", "plugins", "python-panel");
+		const pluginDir = path.join(this.app.vault.configDir, "plugins", "python-panel");
 		await fs.mkdir(pluginDir, { recursive: true });
 		const selectionIn = path.join(pluginDir, "selection-in.txt");
 		const selectionOut = path.join(pluginDir, "selection-out.txt");
@@ -155,7 +169,7 @@ export class CustomWeeklyView extends ItemView {
 			env,
 		});
 
-		if (stderr?.trim()) {
+		if (stderr.trim()) {
 			console.warn(`[Python Panel] ${this.getScriptName(scriptPath)} warnings:`, stderr);
 		}
 
@@ -166,7 +180,7 @@ export class CustomWeeklyView extends ItemView {
 			// output file missing — fall back to stdout
 		}
 		if (!result.trim()) {
-			result = stdout ?? "";
+			result = stdout;
 		}
 
 		if (!result.trim()) {
@@ -191,8 +205,7 @@ export class CustomWeeklyView extends ItemView {
 
 		try {
 			const pythonCmd = await this.findPython();
-			// Use type assertion to access basePath which exists at runtime
-			const vaultPath = (this.app.vault.adapter as any).basePath;
+			const vaultPath = (this.app.vault.adapter as unknown as { basePath: string }).basePath;
 			const fullScriptPath = `${vaultPath}/${scriptPath}`.replace(/\\/g, "/");
 
 			// Get active file path if available (scripts can use this if needed)
@@ -224,12 +237,6 @@ export class CustomWeeklyView extends ItemView {
 					env,
 				});
 
-				if (stdout) {
-					console.log(
-						`[Python Panel] ${this.getScriptName(scriptPath)} output:`,
-						stdout
-					);
-				}
 				if (stderr) {
 					console.warn(
 						`[Python Panel] ${this.getScriptName(scriptPath)} warnings:`,
@@ -248,32 +255,30 @@ export class CustomWeeklyView extends ItemView {
 
 			this.showStatus("success", `Script completed: ${this.getScriptName(scriptPath)}`);
 			
-		} catch (error: any) {
+		} catch (error: unknown) {
 			// exec rejects on non-zero exit but still carries the script's output;
-			// log it like the success path so partial results aren't lost.
-			if (error.stdout) {
-				console.log(
-					`[Python Panel] ${this.getScriptName(scriptPath)} output:`,
-					error.stdout
-				);
-			}
-			if (error.stderr) {
+			// surface stderr like the success path so partial results aren't lost.
+			const ex = error as { stdout?: unknown; stderr?: unknown; code?: unknown };
+			const stdout = typeof ex.stdout === "string" ? ex.stdout : "";
+			const stderr = typeof ex.stderr === "string" ? ex.stderr : "";
+
+			if (stderr) {
 				console.warn(
 					`[Python Panel] ${this.getScriptName(scriptPath)} warnings:`,
-					error.stderr
+					stderr
 				);
 			}
 
 			let errorMsg = "Script failed";
-			if (error.message && typeof error.message === "string" && !error.stderr) {
+			if (error instanceof Error && !stderr) {
 				errorMsg = error.message;
-			} else if (error.code === "ENOENT") {
+			} else if (ex.code === "ENOENT") {
 				errorMsg = "Python not found. Please install Python.";
-			} else if (error.code === "ETIMEDOUT") {
+			} else if (ex.code === "ETIMEDOUT") {
 				errorMsg = "Script timed out";
-			} else if (error.stderr) {
+			} else if (stderr) {
 				// Try to extract a simple error message
-				const stderrLines = error.stderr.split("\n").filter((line: string) => line.trim());
+				const stderrLines = stderr.split("\n").filter((line) => line.trim());
 				if (stderrLines.length > 0) {
 					const lastLine = stderrLines[stderrLines.length - 1];
 					if (lastLine.includes("Error") || lastLine.includes("error")) {
@@ -282,8 +287,8 @@ export class CustomWeeklyView extends ItemView {
 				}
 			}
 			
-			const done = doneSummaryLine(error.stdout);
-			const exit = error.code != null ? ` (exit ${error.code})` : "";
+			const done = doneSummaryLine(stdout);
+			const exit = ex.code != null ? ` (exit ${String(ex.code)})` : "";
 			new Notice(
 				`${this.getScriptName(scriptPath)} failed${exit}` +
 					(done ? ` — ${done}` : "") +
@@ -320,17 +325,16 @@ export class CustomWeeklyView extends ItemView {
 
 	showStatus(type: "success" | "error", message: string) {
 		this.statusEl.textContent = message;
-		this.statusEl.className = `python-panel-status ${type}`;
-		this.statusEl.style.display = "block";
+		this.statusEl.className = `python-panel-status ${type} visible`;
 		
 		// Auto-hide after 5 seconds
-		setTimeout(() => {
+		window.setTimeout(() => {
 			this.hideStatus();
 		}, 5000);
 	}
 
 	hideStatus() {
-		this.statusEl.style.display = "none";
+		this.statusEl.className = "python-panel-status";
 	}
 
 	statusEl: HTMLElement;

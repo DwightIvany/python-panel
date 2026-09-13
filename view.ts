@@ -1,7 +1,7 @@
 import { ItemView, MarkdownView, Notice, WorkspaceLeaf } from "obsidian";
 import PythonPanelPlugin from "./main";
 import { isSeparator, parseSeparator } from "./separator";
-import { exec, joinPath, mkdirp, processEnv, readTextFile, writeTextFile } from "./nodebridge";
+import { exec, processEnv } from "./nodebridge";
 
 /** Scripts that reflow/replace the active editor selection (no Ctrl+C/V). */
 const SELECTION_SCRIPT_NAMES = new Set([
@@ -131,17 +131,19 @@ export class PythonPanelView extends ItemView {
 			throw new Error("Select text in the note, then click the button.");
 		}
 
-		const pluginDir = joinPath(this.app.vault.configDir, "plugins", "python-panel");
-		await mkdirp(pluginDir);
-		const selectionIn = joinPath(pluginDir, "selection-in.txt");
-		const selectionOut = joinPath(pluginDir, "selection-out.txt");
-		await writeTextFile(selectionIn, selected);
+		// Selection files live in the plugin folder, managed through the
+		// Vault adapter API (no direct fs access).
+		const pluginDir = `${this.app.vault.configDir}/plugins/python-panel`;
+		await this.app.vault.adapter.mkdir(pluginDir);
+		const selectionIn = `${pluginDir}/selection-in.txt`;
+		const selectionOut = `${pluginDir}/selection-out.txt`;
+		await this.app.vault.adapter.write(selectionIn, selected);
 
 		const env = {
 			...processEnv(),
 			PYTHONIOENCODING: "utf-8",
-			OBSIDIAN_SELECTION_IN: selectionIn,
-			OBSIDIAN_SELECTION_OUT: selectionOut,
+			OBSIDIAN_SELECTION_IN: `${vaultPath}/${selectionIn}`,
+			OBSIDIAN_SELECTION_OUT: `${vaultPath}/${selectionOut}`,
 			...(activeFilePath && { OBSIDIAN_ACTIVE_FILE: activeFilePath }),
 		};
 
@@ -158,7 +160,7 @@ export class PythonPanelView extends ItemView {
 
 		let result = "";
 		try {
-			result = await readTextFile(selectionOut);
+			result = await this.app.vault.adapter.read(selectionOut);
 		} catch {
 			// output file missing — fall back to stdout
 		}

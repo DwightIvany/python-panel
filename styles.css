@@ -1,0 +1,95 @@
+.python-panel-container {
+	padding: 6px;
+}
+
+.python-panel-button {
+	width: 100%;
+	margin-bottom: 2px;
+	padding: 4px 8px;
+	text-align: left;
+	cursor: pointer;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background-color: var(--background-secondary);
+	transition: background-color 0.2s;
+}
+
+.python-panel-button:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.python-panel-button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.python-panel-button.running {
+	background-color: var(--interactive-success);
+	color: var(--text-on-accent);
+}
+
+.python-panel-status {
+	margin-top: 6px;
+	padding: 4px;
+	font-size: 0.9em;
+	border-radius: 4px;
+}
+
+.python-panel-status.success {
+	background-color: var(--background-modifier-success);
+	color: var(--text-success);
+}
+
+.python-panel-status.error {
+	background-color: var(--background-modifier-error);
+	color: var(--text-error);
+}
+
+.python-panel-separator {
+	border: none;
+	border-top: 1px solid var(--background-modifier-border);
+	margin: 2px 0 6px 0;
+}
+
+.python-panel-separator-label {
+	margin: 4px 0 0 0;
+	font-size: 0.85em;
+	font-weight: 600;
+	text-transform: uppercase;
+	color: var(--text-muted);
+	letter-spacing: 0.05em;
+}
+
+.python-panel-separator-setting {
+	font-style: italic;
+	align-items: center;
+}
+
+.python-panel-separator-setting .setting-item-name {
+	color: var(--text-muted);
+	margin: 0;
+}
+
+/* Make settings text inputs use most of the available panel width */
+.python-panel-entry-setting {
+	padding-top: 0.25em;
+	padding-bottom: 0.25em;
+	margin-bottom: 0.25em;
+}
+
+.python-panel-entry-setting .setting-item-info {
+	flex: 0 1 auto;
+}
+
+.python-panel-entry-setting .setting-item-control {
+	flex: 1 1 auto;
+	justify-content: flex-end;
+	flex-wrap: nowrap;
+	gap: 4px;
+}
+
+.python-panel-entry-setting .setting-item-control input[type="text"] {
+	flex: 1 1 auto;
+	width: 100%;
+	min-width: 120px;
+}

@@ -1,0 +1,16 @@
+{
+  "scripts": [
+    "software/python/obsidian-scripts/copy-focus-to-weekly.py",
+    "software/python/obsidian-scripts/99clean.py",
+    "software/python/obsidian-scripts/move-done-sections.py",
+    "software/python/obsidian-scripts/cleanup-latest-weekly.py",
+    "software/python/obsidian-scripts/remove-empty-sections.py",
+    "software/python/obsidian-scripts/done_and_sort.py",
+    "software/python/obsidian-scripts/close-project.py",
+    "software/python/obsidian-scripts/move-done-projects.py",
+    "software/python/obsidian-scripts/next-actions.py",
+    "software/python/obsidian-scripts/clean-daily.py",
+    "software/python/obsidian-scripts/remove-white-lines.py",
+    "software/python/obsidian-scripts/reflow-prose-selection.py"
+  ]
+}

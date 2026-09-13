@@ -1,11 +1,11 @@
 import { Plugin, PluginSettingTab, Setting, App } from "obsidian";
-import CustomWeeklyPlugin from "./main";
+import PythonPanel from "./main";
 import { isSeparator } from "./separator";
 
 export class CustomWeeklySettingTab extends PluginSettingTab {
-	plugin: CustomWeeklyPlugin;
+	plugin: PythonPanel;
 
-	constructor(app: App, plugin: CustomWeeklyPlugin) {
+	constructor(app: App, plugin: PythonPanel) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

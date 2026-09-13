@@ -16,7 +16,7 @@ const DEFAULT_SETTINGS: CustomWeeklySettings = {
 	]
 };
 
-export default class CustomWeeklyPlugin extends Plugin {
+export default class PythonPanel extends Plugin {
 	settings: CustomWeeklySettings;
 	view: CustomWeeklyView;
 

@@ -33,6 +33,7 @@ export class PythonPanelSettingTab extends PluginSettingTab {
 			{
 				type: "list" as const,
 				heading: "Scripts",
+				cls: "python-panel-entry-setting",
 				emptyState: "No scripts configured.",
 				addItem: {
 					name: "Add script",
